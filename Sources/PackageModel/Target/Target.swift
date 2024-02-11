@@ -77,6 +77,17 @@ public class Target: PolymorphicCodableProtocol {
         }
     }
 
+    /// A reference to a product within the same package as a target dependency.
+    public struct InnerProductReference: Codable {
+        /// The name of the product dependency.
+        public let name: String
+
+        /// Creates an inner product reference instance.
+        public init(name: String) {
+            self.name = name
+        }
+    }
+
     /// A target dependency to a target or product.
     public enum Dependency {
         /// A dependency referencing another target, with conditions.
@@ -84,6 +95,9 @@ public class Target: PolymorphicCodableProtocol {
 
         /// A dependency referencing a product, with conditions.
         case product(_ product: ProductReference, conditions: [PackageCondition])
+
+        /// A dependency referencing a product in the same package, with conditions.
+        case innerProduct(_ product: InnerProductReference, conditions: [PackageCondition])
 
         /// The target if the dependency is a target dependency.
         public var target: Target? {
@@ -103,12 +117,23 @@ public class Target: PolymorphicCodableProtocol {
             }
         }
 
+        /// The inner product reference if the dependency is an inner product dependency.
+        public var innerProduct: InnerProductReference? {
+            if case .innerProduct(let product, _) = self {
+                return product
+            } else {
+                return nil
+            }
+        }
+
         /// The dependency conditions.
         public var conditions: [PackageCondition] {
             switch self {
             case .target(_, let conditions):
                 return conditions
             case .product(_, let conditions):
+                return conditions
+            case .innerProduct(_, let conditions):
                 return conditions
             }
         }
@@ -119,6 +144,8 @@ public class Target: PolymorphicCodableProtocol {
             case .target(let target, _):
                 return target.name
             case .product(let product, _):
+                return product.name
+            case .innerProduct(let product, _):
                 return product.name
             }
         }
