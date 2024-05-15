@@ -1709,7 +1709,7 @@ extension Target.Dependency {
     fileprivate var nameAndType: String {
         switch self {
         case .target:
-            "target-\(name)"
+            return "target-\(name)"
         case .product:
             return "product-\(name)"
         case .innerProduct:

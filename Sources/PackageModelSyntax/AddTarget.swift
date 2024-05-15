@@ -329,7 +329,8 @@ fileprivate extension TargetDescription.Dependency {
         switch self {
         case .target(name: let name, condition: _),
             .byName(name: let name, condition: _),
-            .product(name: let name, package: _, moduleAliases: _, condition: _):
+            .product(name: let name, package: _, moduleAliases: _, condition: _),
+            .innerProduct(name: let name, condition: _):
             name
         }
     }
