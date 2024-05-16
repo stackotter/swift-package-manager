@@ -75,14 +75,25 @@ public struct ResolvedProduct {
         assert(product.targets.count == targets.count && product.targets.map(\.name).sorted() == targets.map(\.name).sorted())
         self.packageIdentity = packageIdentity
         self.underlying = product
-        self.targets = targets
+
+        let (platforms, platformVersionProvider) = Self.computePlatforms(targets: targets)
+        self.targets = IdentifiableSet<ResolvedModule>(product.targets.map { targ in
+          ResolvedModule(
+            packageIdentity: packageIdentity, 
+            underlying: targ,
+            dependencies: targets.flatMap { $0.dependencies.first },
+            defaultLocalization: nil, 
+            supportedPlatforms: platforms, 
+            platformVersionProvider: platformVersionProvider
+          )
+        })
 
         // defaultLocalization is currently shared across the entire package
         // this may need to be enhanced if / when we support localization per target or product
         let defaultLocalization = self.targets.first?.defaultLocalization
         self.defaultLocalization = defaultLocalization
 
-        let (platforms, platformVersionProvider) = Self.computePlatforms(targets: targets)
+        
         self.supportedPlatforms = platforms
         self.platformVersionProvider = platformVersionProvider
 
