@@ -414,14 +414,42 @@ private func createResolvedPackages(
             })
             for targetBuilder in targetBuilders {
                 var conditions: [PackageCondition]?
-                for dependency in targetBuilder.target.dependencies {
-                    if case let .innerProduct(innerProduct, dependencyConditions) = dependency, innerProduct.name == product.name {
+                var dependency: Target.Dependency?
+                for dep in targetBuilder.target.dependencies {
+                    dependency = dep
+                    if case let .innerProduct(innerProduct, dependencyConditions) = dep, innerProduct.name == product.name {
                         conditions = dependencyConditions
                     }
                 }
-                if let conditions = conditions {
+                if let conditions = conditions, 
+                   let dependency = dependency {
                     // TODO: Check for cycles
-                    targetBuilder.dependencies.append(.product(productBuilder, conditions: conditions))
+                    let exists = targetBuilder.dependencies.contains {
+                        if case .target(let trgtBuilder, let _) = $0 {
+                            return trgtBuilder.target.name == productBuilder.product.name
+                        }
+                        if case .product(let productBuilder, let _) = $0 {
+                            return productBuilder.product.name == productBuilder.product.name
+                        }
+                        return false
+                    }
+                    if exists {
+                      targetBuilder.dependencies += targetBuilder.dependencies.filter {
+                          if case .target(let trgtBuilder, let _) = $0 {
+                              return trgtBuilder.target.name == productBuilder.product.name
+                          }
+                          if case .product(let prodBuilder, let _) = $0 {
+                              return prodBuilder.product.name == productBuilder.product.name
+                          }
+                          return false
+                       }.map { _ in
+                          return .product(productBuilder, conditions: conditions)
+                      }
+                    }
+                    else
+                    {
+                      targetBuilder.dependencies.append(.product(productBuilder, conditions: conditions))
+                    }
                 }
             }
             return productBuilder
